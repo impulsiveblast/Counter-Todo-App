@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Tracker</title>
+
+<style>
+:root{
+  --primary:#4F46E5;
+  --primary2:#6D63FF;
+  --bg:#F5F6FF;
+  --card:#FFFFFF;
+  --text:#1E1E2F;
+  --muted:#8A8AA3;
+  --danger:#FCE8E6;
+  --danger-text:#D93025;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  background:var(--bg);
+  font-family:'Segoe UI',sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:30px 15px;
+}
+
+.container{
+  width:100%;
+  max-width:430px;
+}
+
+.header{
+  background:linear-gradient(135deg,var(--primary),var(--primary2));
+  color:white;
+  border-radius:30px;
+  padding:25px;
+  margin-bottom:20px;
+  box-shadow:0 15px 40px rgba(79,70,229,.25);
+}
+
+.header h1{
+  font-size:30px;
+  margin-bottom:6px;
+}
+
+.header p{
+  opacity:.9;
+}
+
+.total{
+  margin-top:18px;
+  background:rgba(255,255,255,.15);
+  padding:16px;
+  border-radius:18px;
+  text-align:center;
+}
+
+.total span{
+  display:block;
+  font-size:36px;
+  font-weight:800;
+  margin-top:5px;
+}
+
+.add-btn{
+  width:100%;
+  border:none;
+  background:white;
+  color:var(--primary);
+  padding:16px;
+  border-radius:18px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  margin-bottom:20px;
+  box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.form{
+  display:none;
+  background:white;
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:20px;
+  box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.form input{
+  width:100%;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  margin-bottom:14px;
+  font-size:15px;
+}
+
+.save-btn{
+  width:100%;
+  border:none;
+  background:var(--primary);
+  color:white;
+  padding:14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.card{
+  background:white;
+  border-radius:22px;
+  padding:20px;
+  margin-bottom:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+}
+
+.card h3{
+  margin-bottom:15px;
+  font-size:18px;
+}
+
+.count{
+  font-size:34px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:18px;
+  color:var(--primary);
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.actions button{
+  min-height:58px;
+  border:none;
+  border-radius:14px;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.actions button:hover{
+  transform:translateY(-2px);
+}
+
+.plus{
+  background:#E8F0FE;
+}
+
+.minus{
+  background:#FFF4E5;
+}
+
+.reset{
+  background:#F3F4F6;
+}
+
+.delete{
+  background:var(--danger);
+  color:var(--danger-text);
+}
+
+.date{
+  margin-top:15px;
+  font-size:13px;
+  color:var(--muted);
+  text-align:center;
+}
+
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:25px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>Today</h1>
+    <p id="todayDate"></p>
+
+```
+<div class="total">
+  Total Applications
+  <span id="totalCount">0</span>
+</div>
+```
+
+  </div>
+
+  <button class="add-btn" id="addNew">
+    + Add New Tracker
+  </button>
+
+  <div class="form" id="form">
+
+```
+<input
+  type="text"
+  id="titleInput"
+  placeholder="Tracker Name (optional)"
+>
+
+<input
+  type="number"
+  id="countInput"
+  placeholder="Initial Count (optional)"
+  min="0"
+>
+
+<button class="save-btn" id="saveBtn">
+  Save Tracker
+</button>
+```
+
+  </div>
+
+  <div id="list"></div>
+
+</div>
+
+<script>
+
+let entries =
+JSON.parse(
+localStorage.getItem("applicationTracker")
+) || [];
+
+const list =
+document.getElementById("list");
+
+const form =
+document.getElementById("form");
+
+document.getElementById("todayDate").innerText =
+new Date().toDateString();
+
+document.getElementById("addNew")
+.addEventListener("click",()=>{
+
+  form.style.display =
+  form.style.display === "block"
+  ? "none"
+  : "block";
+
+});
+
+document.getElementById("saveBtn")
+.addEventListener("click",()=>{
+
+  let title =
+  document.getElementById("titleInput")
+  .value.trim();
+
+  let count =
+  document.getElementById("countInput")
+  .value;
+
+  if(title === ""){
+    title = "Total Applications";
+  }
+
+  if(count === ""){
+    count = 0;
+  }
+
+  entries.push({
+    id:Date.now(),
+    title:title,
+    count:Number(count),
+    date:new Date().toLocaleDateString()
+  });
+
+  save();
+  render();
+
+  document.getElementById("titleInput").value="";
+  document.getElementById("countInput").value="";
+
+  form.style.display="none";
+});
+
+function save(){
+  localStorage.setItem(
+    "applicationTracker",
+    JSON.stringify(entries)
+  );
+}
+
+function render(){
+
+  list.innerHTML="";
+
+  let total = 0;
+
+  if(entries.length === 0){
+    list.innerHTML =
+    '<div class="empty">No trackers added yet.</div>';
+  }
+
+  entries.forEach(item=>{
+
+    total += item.count;
+
+    const card =
+    document.createElement("div");
+
+    card.className="card";
+
+    card.innerHTML = `
+      <h3>${item.title}</h3>
+
+      <div class="count">
+        ${item.count}
+      </div>
+
+      <div class="actions">
+
+        <button class="plus">➕</button>
+
+        <button class="minus">➖</button>
+
+        <button class="reset">🔄</button>
+
+        <button class="delete">🗑️</button>
+
+      </div>
+
+      <div class="date">
+        Saved on: ${item.date}
+      </div>
+    `;
+
+    const buttons =
+    card.querySelectorAll("button");
+
+    buttons[0].onclick = ()=>{
+
+      item.count++;
+
+      save();
+      render();
+    };
+
+    buttons[1].onclick = ()=>{
+
+      if(item.count > 0){
+        item.count--;
+      }
+
+      save();
+      render();
+    };
+
+    buttons[2].onclick = ()=>{
+
+      item.count = 0;
+
+      save();
+      render();
+    };
+
+    buttons[3].onclick = ()=>{
+
+      entries =
+      entries.filter(
+        e => e.id !== item.id
+      );
+
+      save();
+      render();
+    };
+
+    list.appendChild(card);
+
+  });
+
+  document.getElementById("totalCount")
+  .innerText = total;
+}
+
+render();
+
+</script>
+
+</body>
+</html>
